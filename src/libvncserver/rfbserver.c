@@ -2639,7 +2639,10 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
             }
         }
 
-
+       if (cl->enableH264) {
+            cl->preferredEncoding = rfbEncodingH264_noVNC;
+            rfbLog("*** 强制使用 H.264 编码 ***\n");
+        }
 
         if (cl->preferredEncoding == -1) {
             if (lastPreferredEncoding==-1) {
