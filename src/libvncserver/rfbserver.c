@@ -1134,6 +1134,7 @@ rfbSendSupportedEncodings(rfbClientPtr cl)
 	rfbEncodingSupportedMessages,
 	rfbEncodingSupportedEncodings,
 	rfbEncodingServerIdentity,
+	rfbEncodingH264_noVNC,  // ← 添加这一行
 #ifdef LIBVNCSERVER_HAVE_LIBZ
     rfbEncodingExtendedClipboard,
 #endif
