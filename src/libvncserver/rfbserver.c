@@ -2441,10 +2441,13 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
 #ifdef LIBVNCSERVER_HAVE_LIBPNG
 	    case rfbEncodingTightPng:
 #endif
+            case rfbEncodingH264_noVNC:
             /* The first supported encoding is the 'preferred' encoding */
                 if (cl->preferredEncoding == -1)
                     cl->preferredEncoding = enc;
 
+                if (enc == rfbEncodingH264_noVNC)
+                    cl->enableH264 = TRUE;
 
                 break;
 	    case rfbEncodingXCursor:
@@ -3637,6 +3640,10 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
 	    break;
 #endif
 #endif
+        case rfbEncodingH264_noVNC:
+            if (!rfbSendRectEncodingH264(cl, x, y, w, h))
+                goto updateFailed;
+            break;
         }
     }
     if (i) {
