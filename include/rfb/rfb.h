@@ -523,6 +523,7 @@ typedef struct _rfbClientRec {
     rfbBool onHold;
     rfbBool readyForSetColourMapEntries;
     rfbBool useCopyRect;
+    rfbBool enableH264;
     int preferredEncoding;
     int correMaxWidth, correMaxHeight;
 
