@@ -864,6 +864,7 @@ extern void rfbNewUDPConnection(rfbScreenInfoPtr rfbScreen,rfbSocket sock);
 extern void rfbProcessUDPInput(rfbScreenInfoPtr rfbScreen);
 extern rfbBool rfbSendFramebufferUpdate(rfbClientPtr cl, sraRegionPtr updateRegion);
 extern rfbBool rfbSendRectEncodingRaw(rfbClientPtr cl, int x,int y,int w,int h);
+extern rfbBool rfbSendRectEncodingH264(rfbClientPtr cl, int x,int y,int w,int h);
 extern rfbBool rfbSendUpdateBuf(rfbClientPtr cl);
 extern void rfbSendServerCutText(rfbScreenInfoPtr rfbScreen,char *str, int len);
 #ifdef LIBVNCSERVER_HAVE_LIBZ
