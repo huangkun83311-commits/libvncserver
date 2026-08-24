@@ -40,7 +40,8 @@ rfbSendRectEncodingH264(rfbClientPtr cl,
     const uint8_t *h264Data = NULL;
     size_t h264Len = 0;
     if (!tvGetLatestH264Data(&h264Data, &h264Len)) {
-        return TRUE;
+        rfbLog("H264: 无数据，回退到 Tight\n");
+        return rfbSendRectEncodingTight(cl, x, y, w, h);  // ← 改这一行
     }
 
     uint32_t payloadLen = Swap32IfLE((uint32_t)h264Len);
