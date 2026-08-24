@@ -5,6 +5,8 @@
 #include <rfb/rfb.h>
 #include "private.h"
 
+extern int tvGetLatestH264Data(const uint8_t **outData, size_t *outLen);
+
 rfbBool
 rfbSendRectEncodingH264(rfbClientPtr cl,
                         int x,
@@ -35,6 +37,26 @@ rfbSendRectEncodingH264(rfbClientPtr cl,
            sz_rfbFramebufferUpdateRectHeader);
     cl->ublen += sz_rfbFramebufferUpdateRectHeader;
 
-    /* TODO: 接入 TVH264Encoder */
+    const uint8_t *h264Data = NULL;
+    size_t h264Len = 0;
+    if (!tvGetLatestH264Data(&h264Data, &h264Len)) {
+        return TRUE;
+    }
+
+    uint32_t payloadLen = Swap32IfLE((uint32_t)h264Len);
+    uint32_t flags = 0;
+
+    if (cl->ublen + 8 + h264Len > UPDATE_BUF_SIZE) {
+        if (!rfbSendUpdateBuf(cl))
+            return FALSE;
+    }
+
+    memcpy(&cl->updateBuf[cl->ublen], &payloadLen, 4);
+    cl->ublen += 4;
+    memcpy(&cl->updateBuf[cl->ublen], &flags, 4);
+    cl->ublen += 4;
+    memcpy(&cl->updateBuf[cl->ublen], h264Data, h264Len);
+    cl->ublen += h264Len;
+
     return TRUE;
 }
