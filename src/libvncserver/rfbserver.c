@@ -2402,6 +2402,7 @@ rfbProcessClientNormalMessage(rfbClientPtr cl)
         cl->enableSupportedMessages  = FALSE;
         cl->enableSupportedEncodings = FALSE;
         cl->enableServerIdentity     = FALSE;
+		cl->enableH264               = FALSE;
 #if defined(LIBVNCSERVER_HAVE_LIBZ) || defined(LIBVNCSERVER_HAVE_LIBPNG)
         cl->tightQualityLevel        = -1;
 #ifdef LIBVNCSERVER_HAVE_LIBJPEG
@@ -3516,9 +3517,13 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
 	}
 	sraRgnReleaseIterator(i); i=NULL;
 #endif
-    } else {
-        nUpdateRegionRects = sraRgnCountRects(updateRegion);
-    }
+	} else if (cl->preferredEncoding == rfbEncodingH264_noVNC) {
+	    /* H.264 是帧间编码，整屏作为一个矩形 */
+	    nUpdateRegionRects = 1;
+	} else {
+	    nUpdateRegionRects = sraRgnCountRects(updateRegion);
+	}
+
 
     fu->type = rfbFramebufferUpdate;
     if (nUpdateRegionRects != 0xFFFF) {
@@ -3539,6 +3544,7 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
 	   /* Tight encoding counts the rectangles differently */
 	   && cl->preferredEncoding != rfbEncodingTightPng
 #endif
+	   && cl->preferredEncoding != rfbEncodingH264_noVNC
 	   && nUpdateRegionRects>cl->screen->maxRectsPerUpdate) {
 	    sraRegion* newUpdateRegion = sraRgnBBox(updateRegion);
 	    sraRgnDestroy(updateRegion);
@@ -3588,18 +3594,25 @@ rfbSendFramebufferUpdate(rfbClientPtr cl,
 	if (!rfbSendCopyRegion(cl,updateCopyRegion,dx,dy))
 	        goto updateFailed;
     }
+	
+	for(i = sraRgnGetIterator(updateRegion); sraRgnIteratorNext(i,&rect);){
+	        int x = rect.x1;
+	        int y = rect.y1;
+	        int w = rect.x2 - x;
+	        int h = rect.y2 - y;
+	        /* We need to count the number of rects in the scaled screen */
+	        if (cl->screen!=cl->scaledScreen)
+	            rfbScaledCorrection(cl->screen, cl->scaledScreen, &x, &y, &w, &h, "rfbSendFramebufferUpdate");
+	        /* H.264: 整屏作为一个矩形，忽略脏区域细分，发完即跳出循环 */
+	        if (cl->preferredEncoding == rfbEncodingH264_noVNC) {
+	            if (!rfbSendRectEncodingH264(cl, 0, 0,
+	                        cl->scaledScreen->width,
+	                        cl->scaledScreen->height))
+	                goto updateFailed;
+	            break;
+	        }
+	        switch (cl->preferredEncoding) {
 
-    for(i = sraRgnGetIterator(updateRegion); sraRgnIteratorNext(i,&rect);){
-        int x = rect.x1;
-        int y = rect.y1;
-        int w = rect.x2 - x;
-        int h = rect.y2 - y;
-
-        /* We need to count the number of rects in the scaled screen */
-        if (cl->screen!=cl->scaledScreen)
-            rfbScaledCorrection(cl->screen, cl->scaledScreen, &x, &y, &w, &h, "rfbSendFramebufferUpdate");
-
-        switch (cl->preferredEncoding) {
 	case -1:
         case rfbEncodingRaw:
             if (!rfbSendRectEncodingRaw(cl, x, y, w, h))
